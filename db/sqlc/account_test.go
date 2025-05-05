@@ -4,14 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/starjardin/simplebank/db/utils"
+	"github.com/starjardin/simplebank/utils"
 
 	"github.com/stretchr/testify/require"
 )
 
 func createRandomAccount(t *testing.T) Account {
+
+	user := createRandomUser(t)
+
 	arg := CreateAccountParams{
-		Owner:    utils.RandomOwner(),
+		Owner:    user.Username,
 		Balance:  utils.RandomMoney(),
 		Currency: utils.RandomCurrency(),
 	}
@@ -85,20 +88,24 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
+	var lastAccount Account
 	for range 10 {
-		createRandomAccount(t)
+		lastAccount = createRandomAccount(t)
 	}
 
 	arg := ListAccountsParams{
+		Owner:  lastAccount.Owner,
 		Limit:  5,
-		Offset: 5,
+		Offset: 0,
 	}
 
 	accounts, err := testQueries.ListAccounts(context.Background(), arg)
 
 	require.NoError(t, err)
+	require.NotEmpty(t, accounts)
 
 	for _, account := range accounts {
 		require.NotEmpty(t, account)
+		require.Equal(t, lastAccount.Owner, account.Owner)
 	}
 }

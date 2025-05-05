@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTansferTx(t *testing.T) {
+func TestTransferTx(t *testing.T) {
 	store := NewStore(testDb)
 
 	account1 := createRandomAccount(t)
@@ -30,7 +30,7 @@ func TestTansferTx(t *testing.T) {
 
 			ctx := context.WithValue(context.Background(), txKey, txName)
 
-			result, err := store.TansferTx(ctx, TransferTxParams{
+			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: account1.ID,
 				ToAccountID:   account2.ID,
 				Amount:        amount,
@@ -122,7 +122,7 @@ func TestTansferTx(t *testing.T) {
 	require.Equal(t, account2.Balance+int64(n)*amount, updateAccount2.Balance)
 }
 
-func TestTansferTxDeadlock(t *testing.T) {
+func TestTransferTxDeadlock(t *testing.T) {
 	store := NewStore(testDb)
 
 	account1 := createRandomAccount(t)
@@ -146,7 +146,7 @@ func TestTansferTxDeadlock(t *testing.T) {
 				toAccountID = account1.ID
 			}
 
-			_, err := store.TansferTx(context.Background(), TransferTxParams{
+			_, err := store.TransferTx(context.Background(), TransferTxParams{
 				FromAccountID: fromAccountID,
 				ToAccountID:   toAccountID,
 				Amount:        amount,
