@@ -38,6 +38,7 @@ func NewServer(config utils.Config, store db.Store) (*Server, error) {
 
 	server.router.POST("/users", server.createUser)
 	server.router.POST("/users/login", server.loginUser)
+	server.router.POST("/tokens/renew_access", server.renewAccessToken)
 
 	authRoutes := server.router.Group("/").Use(authMiddleware(tokenMaker))
 
