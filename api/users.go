@@ -102,7 +102,7 @@ func (server *Server) loginUser(c *gin.Context) {
 		return
 	}
 
-	user, err := server.store.Getuser(c, req.Username)
+	user, err := server.store.GetUser(c, req.Username)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
