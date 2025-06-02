@@ -31,6 +31,12 @@ server:
 mock:
 	mockgen -package mockdb --destination db/mock/store.go github.com/starjardin/simplebank/db/sqlc Store
 
+tidy:
+	go mod tidy
+
+redis:
+	docker run --name redis -p 6379:6379 -d redis:8-alpine
+
 proto:
 	rm -rf pb/*.go
 	rm -rf docs/swagger/*.swagger.json
@@ -44,4 +50,4 @@ proto:
 evans:
 	evans --host localhost --port 9090 -r repl
 
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock proto evans
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock proto evans tidy redis
