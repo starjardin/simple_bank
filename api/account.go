@@ -1,9 +1,7 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -59,7 +57,7 @@ func (server *Server) getAccount(c *gin.Context) {
 
 	if err != nil {
 
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -90,8 +88,6 @@ func (server *Server) listAccount(c *gin.Context) {
 	var req listAccountRequest
 
 	if err := c.ShouldBindQuery(&req); err != nil {
-		fmt.Println(req.PageID, req.PageSize, err)
-		fmt.Println(req, "afdfsdfdsafsadfsdfsdfsdfsdsdfsfsdfsd")
 		c.JSON(http.StatusBadRequest, errorResponse(err))
 
 		return

@@ -30,12 +30,16 @@ server:
 
 mock:
 	mockgen -package mockdb --destination db/mock/store.go github.com/starjardin/simplebank/db/sqlc Store
+	mockgen -package mockwk --destination worker/mock/distributor.go github.com/starjardin/simplebank/worker TaskDistributor
 
 tidy:
 	go mod tidy
 
 redis:
 	docker run --name redis -p 6379:6379 -d redis:8-alpine
+
+new_migration:
+	migrate create -ext sql -dir db/migration -seq $(name)
 
 proto:
 	rm -rf pb/*.go
@@ -50,4 +54,4 @@ proto:
 evans:
 	evans --host localhost --port 9090 -r repl
 
-.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock proto evans tidy redis
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server mock proto evans tidy redis new_migration

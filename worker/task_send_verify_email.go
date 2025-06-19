@@ -2,12 +2,14 @@ package worker
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
+	db "github.com/starjardin/simplebank/db/sqlc"
+	"github.com/starjardin/simplebank/utils"
 )
 
 type PayloadSendVerifyEmail struct {
@@ -58,13 +60,39 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(
 	user, err := processor.store.GetUser(ctx, payload.Username)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			return fmt.Errorf("user not found: %w", asynq.SkipRetry)
 		}
 		return fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// TODO: send email to user
+	verifyEmail, err := processor.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: utils.RandomString(32),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create verify email: %w", err)
+	}
+
+	subject := "Welcome to Simpe Bank"
+
+	verifyUrl := fmt.Sprintf("http://localhost:8080/v1/verify_email?email_id=%d&secret_code=%s", verifyEmail.ID, verifyEmail.SecretCode)
+
+	content := fmt.Sprintf(`
+		<h1>Hello %s</h1>
+		<p>Thank you for registering with Simple Bank.</p>
+		<p>Please <a href="%s">Click here </a> to verify your email address.</p>
+	`, user.FullName, verifyUrl)
+
+	to := []string{user.Email}
+
+	err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)
+
+	if err != nil {
+		return fmt.Errorf("failed to send verification email: %w", err)
+	}
 
 	log.Info().Str("task_type", task.Type()).
 		Bytes("payload", task.Payload()).

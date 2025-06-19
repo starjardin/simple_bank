@@ -1,14 +1,13 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	db "github.com/starjardin/simplebank/db/sqlc"
 	"github.com/starjardin/simplebank/utils"
 )
@@ -34,7 +33,7 @@ func newUserResponse(user db.User) userResponse {
 		Email:            user.Email,
 		FullName:         user.FullName,
 		PasswordChangeAt: user.PasswordChangeAt,
-		CreatedAt:        user.CreatedAt,
+		CreatedAt:        user.CreatedAt.Time,
 	}
 }
 
@@ -64,13 +63,9 @@ func (server *Server) createUser(c *gin.Context) {
 	user, err := server.store.CreateUser(c, arg)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				c.JSON(http.StatusForbidden, errorResponse(err))
-				return
-			}
-
+		if db.ErrorCode(err) == db.UniqueViolation {
+			c.JSON(http.StatusForbidden, errorResponse(err))
+			return
 		}
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -105,7 +100,7 @@ func (server *Server) loginUser(c *gin.Context) {
 	user, err := server.store.GetUser(c, req.Username)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -120,14 +115,22 @@ func (server *Server) loginUser(c *gin.Context) {
 		return
 	}
 
-	accessToken, accessPayload, err := server.tokenMaker.CreateToken(user.Username, server.config.AccessTokenDuration)
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
+		user.Username,
+		user.Role,
+		server.config.AccessTokenDuration,
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 
-	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.Username, server.config.RefreshTokenDuration)
+	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(
+		user.Username,
+		user.Role,
+		server.config.RefreshTokenDuration,
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))

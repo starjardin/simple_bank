@@ -21,7 +21,7 @@ var txKey = struct{}{}
 func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
-	err := store.execTx(func(q *Queries) error {
+	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{

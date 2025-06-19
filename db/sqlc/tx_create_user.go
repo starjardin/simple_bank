@@ -14,7 +14,7 @@ type CreateUserTxResult struct {
 func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error) {
 	var result CreateUserTxResult
 
-	err := store.execTx(func(q *Queries) error {
+	err := store.execTx(ctx, func(q *Queries) error {
 		var err error
 
 		result.User, err = q.CreateUser(ctx, arg.CreateUserParams)

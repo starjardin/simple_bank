@@ -1,12 +1,13 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/starjardin/simplebank/db/sqlc"
 )
 
 type renewAccessTokenRequest struct {
@@ -35,7 +36,7 @@ func (server *Server) renewAccessToken(c *gin.Context) {
 	session, err := server.store.GetSession(c, refreshPayload.ID)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, db.ErrorRecordNotFound) {
 			c.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
@@ -66,7 +67,11 @@ func (server *Server) renewAccessToken(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
 
-	accessToken, accessPayload, err := server.tokenMaker.CreateToken(refreshPayload.Username, server.config.AccessTokenDuration)
+	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
+		refreshPayload.Username,
+		refreshPayload.Role,
+		server.config.AccessTokenDuration,
+	)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse(err))

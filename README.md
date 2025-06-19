@@ -1,4 +1,4 @@
-### How to generate code
+# How to generate code
 
 - Generate SQL CRUD with sqlc:
 
@@ -8,17 +8,17 @@
 
 - Generate DB mock with gomock:
 
-    ```
+    ```bash
     make mock
     ```
 
-- Create a new db migration 
+- Create a new db migration
 
     ```bash
     migrate create -ext sql -dir db/migration -seq <migration-name>
     ```
 
-### How to run
+## How to run
 
 - Run server:
 
